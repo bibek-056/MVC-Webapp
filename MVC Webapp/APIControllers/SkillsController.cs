@@ -10,6 +10,7 @@ using MVC_Webapp.Models;
 using MVC_Webapp.Helpers;
 using MVC_Webapp.DTOs.SkillDTOs;
 using AutoMapper;
+using MVC_Webapp.Repositories;
 
 namespace MVC_Webapp.APIControllers
 {
@@ -20,11 +21,22 @@ namespace MVC_Webapp.APIControllers
     {
         private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
+        private readonly IGenericRepos _genericRepos;
 
-        public SkillsController(MVC_WebappContext context, IMapper mapper)
+        public SkillsController(MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
         {
             _context = context;
             _mapper = mapper;
+            _genericRepos = genericRepos;
+        }
+
+        // GET: api/Skills
+        [HttpGet]
+        public async Task<ActionResult<List<SkillReadDTOs>>> GetSkills()
+        {
+            var skill = await _genericRepos.GetAll<Skills>();
+            var records = _mapper.Map<List<SkillReadDTOs>>(skill);
+            return Ok(records);
         }
 
         // GET: api/Skills/5

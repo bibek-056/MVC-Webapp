@@ -12,6 +12,7 @@ using MVC_Webapp.DTOs.ExperienceDTOs;
 using AutoMapper;
 using MVC_Webapp.DTOs.EducationDTOs;
 using MVC_Webapp.DTOs.InformationDTOs;
+using MVC_Webapp.Repositories;
 
 namespace MVC_Webapp.APIControllers
 {
@@ -22,11 +23,22 @@ namespace MVC_Webapp.APIControllers
     {
         private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
+        private readonly IGenericRepos _genericRepos;
 
-        public ExperiencesController(MVC_WebappContext context, IMapper mapper)
+        public ExperiencesController(MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
         {
             _context = context;
             _mapper = mapper;
+            _genericRepos = genericRepos;
+        }
+
+        // GET: api/Experiences
+        [HttpGet]
+        public async Task<ActionResult<List<ExperienceReadDTOs>>> GetExperiences()
+        {
+            var experience = await _genericRepos.GetAll<Experiences>();
+            var records = _mapper.Map<List<ExperienceReadDTOs>>(experience);
+            return Ok(records);
         }
 
         // GET: api/Experiences/5

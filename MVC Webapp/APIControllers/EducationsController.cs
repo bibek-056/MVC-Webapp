@@ -21,11 +21,22 @@ namespace MVC_Webapp.APIControllers
     {
         private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
+        private readonly IGenericRepos _genericRepos;
 
-        public EducationsController( MVC_WebappContext context, IMapper mapper)
+        public EducationsController( MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
         {
             _mapper = mapper;
             _context = context;
+            _genericRepos = genericRepos;
+        }
+
+        // GET: api/Educations
+        [HttpGet]
+        public async Task<ActionResult<List<EducationReadDTOs>>> GetEducations()
+        {
+            var eduacation = await _genericRepos.GetAll<Educations>();
+            var records = _mapper.Map<List<EducationReadDTOs>>(eduacation);
+            return Ok(records);
         }
 
         // GET: api/Educations/5
