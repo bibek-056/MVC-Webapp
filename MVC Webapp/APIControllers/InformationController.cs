@@ -10,6 +10,7 @@ using MVC_Webapp.Data;
 using MVC_Webapp.Models;
 using MVC_Webapp.Helpers;
 using MVC_Webapp.DTOs.InformationDTOs;
+using MVC_Webapp.Repositories;
 
 namespace MVC_Webapp.APIControllers
 {
@@ -18,24 +19,20 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class InformationController : ControllerBase
     {
-        private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
+        private readonly IGenericRepos _genericRepos; 
 
-        public InformationController(MVC_WebappContext context, IMapper mapper)
+        public InformationController( IMapper mapper, IGenericRepos genericRepos)
         {
-            _context = context;
             _mapper = mapper;
+            _genericRepos = genericRepos;
         }
 
         // GET: api/Information
         [HttpGet]
         public async Task<ActionResult<List<InformationReadDTOs>>> GetInformation()
         {
-          if (_context.Information == null)
-          {
-              return NotFound();
-          }
-            var information = await _context.Information.ToListAsync();
+            var information = await _genericRepos.GetAll<Information>();
             var records = _mapper.Map<List<InformationReadDTOs>>(information);
             return Ok(records);
         }
@@ -44,11 +41,7 @@ namespace MVC_Webapp.APIControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<InformationReadDTOs>> GetInformation(int id)
         {
-          if (_context.Information == null)
-          {
-              return NotFound();
-          }
-            var information = await _context.Information.FindAsync(id);
+            var information = await _genericRepos.GetById<Information>(id);
 
             if (information == null)
             {
@@ -65,7 +58,7 @@ namespace MVC_Webapp.APIControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutInformation(int id, InformationUpdateDTOs informationUpdateDTOs)
         {
-            var info = await _context.Information.FindAsync(id);
+            var info = await _genericRepos.GetById<Information>(id);
 
             if (id != informationUpdateDTOs.userId)
             {
@@ -77,8 +70,7 @@ namespace MVC_Webapp.APIControllers
             }
 
             _mapper.Map(informationUpdateDTOs, info);
-            _context.Information.Update(info);
-            await _context.SaveChangesAsync();
+            await _genericRepos.UpdateInfo(info);
 
             var infoReadDTO = _mapper.Map<InformationReadDTOs>(info);
             return Ok(infoReadDTO);
@@ -89,15 +81,9 @@ namespace MVC_Webapp.APIControllers
         [HttpPost]
         public async Task<ActionResult<InformationReadDTOs>> PostInformation(InformationCreateDTOs informationCreateDTOs)
         {
-          if (_context.Information == null)
-          {
-              return Problem("Entity set 'MVC_WebappContext.Information'  is null.");
-          }
             var information = _mapper.Map<Information>(informationCreateDTOs);
 
-            _context.Information.Add(information);
-            
-            await _context.SaveChangesAsync();
+            await _genericRepos.AddInfo(information);
 
             var newInformation = _mapper.Map<InformationReadDTOs>(information);
 
@@ -108,25 +94,19 @@ namespace MVC_Webapp.APIControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInformation(int id)
         {
-            if (_context.Information == null)
-            {
-                return NotFound();
-            }
-            var information = await _context.Information.FindAsync(id);
+            var information = await _genericRepos.GetById<Information>(id);
             if (information == null)
             {
                 return NotFound();
             }
 
-            _context.Information.Remove(information);
-            await _context.SaveChangesAsync();
-
+            await _genericRepos.DeleteInfo(information);
             return NoContent();
         }
 
-        private bool InformationExists(int id)
-        {
-            return (_context.Information?.Any(e => e.userId == id)).GetValueOrDefault();
-        }
+        //private bool InformationExists(int id)
+        //{
+        //    return (_context.Information?.Any(e => e.userId == id)).GetValueOrDefault();
+        //}
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MVC_Webapp.Data;
+using MVC_Webapp.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MVC_WebappContext>(options =>
@@ -18,6 +19,8 @@ builder.Services.AddCors(options =>
 });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IGenericRepos, GenericRepos>();
 
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 

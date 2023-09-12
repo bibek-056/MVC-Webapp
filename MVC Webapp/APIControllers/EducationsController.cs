@@ -10,6 +10,7 @@ using MVC_Webapp.Models;
 using MVC_Webapp.Helpers;
 using MVC_Webapp.DTOs.EducationDTOs;
 using AutoMapper;
+using MVC_Webapp.Repositories;
 
 namespace MVC_Webapp.APIControllers
 {
@@ -21,10 +22,10 @@ namespace MVC_Webapp.APIControllers
         private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
 
-        public EducationsController(MVC_WebappContext context, IMapper mapper)
+        public EducationsController( MVC_WebappContext context, IMapper mapper)
         {
-            _context = context;
             _mapper = mapper;
+            _context = context;
         }
 
         // GET: api/Educations/5
