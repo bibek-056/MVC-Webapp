@@ -21,13 +21,11 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class ProjectsController : ControllerBase
     {
-        private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
         private readonly IGenericRepos _genericRepos;
 
-        public ProjectsController(MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
+        public ProjectsController(IMapper mapper, IGenericRepos genericRepos)
         {
-            _context = context;
             _mapper = mapper;
             _genericRepos = genericRepos; 
         }
@@ -45,11 +43,7 @@ namespace MVC_Webapp.APIControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<List<ProjectReadDTOs>>> GetProjects(int id)
         {
-          if (_context.Projects == null)
-          {
-              return NotFound();
-          }
-            var projects = await _context.Projects.Where(project => project.userId == id).ToListAsync();
+            var projects = await _genericRepos.GetUserData<Projects>(userData => userData.userId == id);
 
             if (projects == null)
             {
@@ -65,7 +59,7 @@ namespace MVC_Webapp.APIControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProjects(int id, ProjectUpdateDTOs projectsUpdateDTOs)
         {
-            var project = await _context.Projects.FindAsync(id);
+            var project = await _genericRepos.GetById<Projects>(id);
 
             if (id != projectsUpdateDTOs.project_id)
             {
@@ -77,8 +71,7 @@ namespace MVC_Webapp.APIControllers
             }
 
             _mapper.Map(projectsUpdateDTOs, project );
-            _context.Projects.Update(project);
-            await _context.SaveChangesAsync();
+            await _genericRepos.UpdateInfo(project);
 
             var projectReadDTO = _mapper.Map<ProjectReadDTOs>(project);
             return Ok(projectReadDTO);
@@ -89,15 +82,9 @@ namespace MVC_Webapp.APIControllers
         [HttpPost]
         public async Task<ActionResult<ProjectReadDTOs>> PostProject(ProjectCreateDTOs projectCreateDTOs)
         {
-            if (_context.Projects == null)
-            {
-                return Problem("Entity set 'MVC_WebappContext.Project'  is null.");
-            }
             var projects = _mapper.Map<Projects>(projectCreateDTOs);
 
-            _context.Projects.Add(projects);
-
-            await _context.SaveChangesAsync();
+           await _genericRepos.AddInfo(projects);
 
             var newProject = _mapper.Map<ProjectReadDTOs>(projects);
 
@@ -108,25 +95,15 @@ namespace MVC_Webapp.APIControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProjects(int id)
         {
-            if (_context.Projects == null)
-            {
-                return NotFound();
-            }
-            var projects = await _context.Projects.FindAsync(id);
+            var projects = await _genericRepos.GetById<Projects>(id);
             if (projects == null)
             {
                 return NotFound();
             }
 
-            _context.Projects.Remove(projects);
-            await _context.SaveChangesAsync();
+            await _genericRepos.DeleteInfo(projects);
 
             return NoContent();
-        }
-
-        private bool ProjectsExists(int id)
-        {
-            return (_context.Projects?.Any(e => e.project_id == id)).GetValueOrDefault();
         }
     }
 }

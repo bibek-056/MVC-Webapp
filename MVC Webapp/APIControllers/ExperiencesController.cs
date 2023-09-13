@@ -21,13 +21,11 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class ExperiencesController : ControllerBase
     {
-        private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
         private readonly IGenericRepos _genericRepos;
 
-        public ExperiencesController(MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
+        public ExperiencesController(IMapper mapper, IGenericRepos genericRepos)
         {
-            _context = context;
             _mapper = mapper;
             _genericRepos = genericRepos;
         }
@@ -45,11 +43,7 @@ namespace MVC_Webapp.APIControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<List<ExperienceReadDTOs>>> GetExperiences(int id)
         {
-          if (_context.Experiences == null)
-          {
-              return NotFound();
-          }
-            var experiences = await _context.Experiences.Where(exp => exp.userId == id).ToListAsync();
+            var experiences = await _genericRepos.GetUserData<Experiences>(userData => userData.userId == id);
 
             if (experiences == null)
             {
@@ -65,7 +59,7 @@ namespace MVC_Webapp.APIControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExperiences(int id, ExperienceUpdateDTOs experiencesUpdateDTOs)
         {
-            var exp = await _context.Experiences.FindAsync(id);
+            var exp = await _genericRepos.GetById<Experiences>(id);
 
             if (id != experiencesUpdateDTOs.experience_id)
             {
@@ -77,8 +71,7 @@ namespace MVC_Webapp.APIControllers
             }
 
             _mapper.Map(experiencesUpdateDTOs, exp);
-            _context.Experiences.Update(exp);
-            await _context.SaveChangesAsync();
+            _genericRepos.UpdateInfo(exp);
 
             var expReadDTO = _mapper.Map<ExperienceReadDTOs>(exp);
             return Ok(expReadDTO);
@@ -89,13 +82,8 @@ namespace MVC_Webapp.APIControllers
         [HttpPost]
         public async Task<ActionResult<ExperienceReadDTOs>> PostExperiences(ExperienceCreateDTOs experienceCreateDTOs)
         {
-          if (_context.Experiences == null)
-          {
-              return Problem("Entity set 'MVC_WebappContext.Experiences'  is null.");
-          }
             var experience = _mapper.Map<Experiences>(experienceCreateDTOs);
-            _context.Experiences.Add(experience);
-            await _context.SaveChangesAsync();
+            _genericRepos.AddInfo(experience);
 
             var newExperience = _mapper.Map<ExperienceReadDTOs>(experience);
 
@@ -106,25 +94,15 @@ namespace MVC_Webapp.APIControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExperiences(int id)
         {
-            if (_context.Experiences == null)
-            {
-                return NotFound();
-            }
-            var experiences = await _context.Experiences.FindAsync(id);
+            var experiences = await _genericRepos.GetById<Experiences>(id);
             if (experiences == null)
             {
                 return NotFound();
             }
 
-            _context.Experiences.Remove(experiences);
-            await _context.SaveChangesAsync();
+            await _genericRepos.DeleteInfo(experiences);
 
             return NoContent();
-        }
-
-        private bool ExperiencesExists(int id)
-        {
-            return (_context.Experiences?.Any(e => e.experience_id == id)).GetValueOrDefault();
         }
     }
 }

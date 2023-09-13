@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MVC_Webapp.Models;
 using Microsoft.AspNetCore.Mvc;
 using MVC_Webapp.DTOs.InformationDTOs;
+using System.Linq.Expressions;
 
 namespace MVC_Webapp.Repositories
 {
@@ -12,6 +13,11 @@ namespace MVC_Webapp.Repositories
         public GenericRepos(MVC_WebappContext context)
         {
             _context = context;
+        }
+
+        public async Task<T> Login<T>(Expression<Func<T, bool>> ForUser) where T : class
+        {
+            return await _context.Set<T>().Where(ForUser).FirstOrDefaultAsync();
         }
         public async Task<List<T>> GetAll<T>() where T : class
         {
@@ -31,6 +37,16 @@ namespace MVC_Webapp.Repositories
             }
 
             return await this._context.Set<T>().FindAsync(id);
+        }
+
+        public async Task<T> GetByName<T>(Expression<Func<T, bool>> ForUser) where T : class
+        {
+            if (_context.Set<T>() == null)
+            {
+                throw new Exception("Not Found");
+            }
+
+            return await this._context.Set<T>().Where(ForUser).FirstOrDefaultAsync();
         }
 
         public async Task<T> AddInfo<T>(T tObj) where T : class
@@ -62,6 +78,11 @@ namespace MVC_Webapp.Repositories
             }
             _context.Set<T>().Remove(tObj);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<T>> GetUserData<T>(Expression<Func<T, bool>> ForUser) where T : class
+        {
+            return await _context.Set<T>().Where(ForUser).ToListAsync();
         }
     }
 }

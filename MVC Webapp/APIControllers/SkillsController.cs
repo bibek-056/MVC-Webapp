@@ -11,6 +11,7 @@ using MVC_Webapp.Helpers;
 using MVC_Webapp.DTOs.SkillDTOs;
 using AutoMapper;
 using MVC_Webapp.Repositories;
+using Microsoft.VisualBasic;
 
 namespace MVC_Webapp.APIControllers
 {
@@ -19,13 +20,11 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class SkillsController : ControllerBase
     {
-        private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
         private readonly IGenericRepos _genericRepos;
 
-        public SkillsController(MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
+        public SkillsController( IMapper mapper, IGenericRepos genericRepos)
         {
-            _context = context;
             _mapper = mapper;
             _genericRepos = genericRepos;
         }
@@ -43,11 +42,7 @@ namespace MVC_Webapp.APIControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<List<SkillReadDTOs>>> GetSkills(int id)
         {
-          if (_context.Skills == null)
-          {
-              return NotFound();
-          }
-            var skills = await _context.Skills.Where(skills => skills.userId == id).ToListAsync();
+            var skills = await _genericRepos.GetUserData<Skills>(userData => userData.userId == id);
 
             if (skills == null)
             {
@@ -63,7 +58,7 @@ namespace MVC_Webapp.APIControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSkills(int id, SkillUpdateDTOs skillUpdateDTOs)
         {
-            var skill = await _context.Skills.FindAsync(id);
+            var skill = await _genericRepos.GetById<Skills>(id);
 
             if (id != skillUpdateDTOs.skillId)
             {
@@ -75,8 +70,7 @@ namespace MVC_Webapp.APIControllers
             }
 
             _mapper.Map(skillUpdateDTOs, skill);
-            _context.Skills.Update(skill);
-            await _context.SaveChangesAsync();
+            _genericRepos.UpdateInfo(skill);
 
             var skillReadDTO = _mapper.Map<SkillReadDTOs>(skill);
             return Ok(skillReadDTO);
@@ -87,15 +81,9 @@ namespace MVC_Webapp.APIControllers
         [HttpPost]
         public async Task<ActionResult<SkillReadDTOs>> PostSkills(SkillCreateDTOs skillsCreateDTOs)
         {
-            if (_context.Skills == null)
-            {
-                return Problem("Entity set 'MVC_WebappContext.Project'  is null.");
-            }
             var skills = _mapper.Map<Skills>(skillsCreateDTOs);
 
-            _context.Skills.Add(skills);
-
-            await _context.SaveChangesAsync();
+            await _genericRepos.AddInfo(skills);
 
             var newSkill = _mapper.Map<SkillReadDTOs>(skills);
 
@@ -106,25 +94,15 @@ namespace MVC_Webapp.APIControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSkills(int id)
         {
-            if (_context.Skills == null)
-            {
-                return NotFound();
-            }
-            var skills = await _context.Skills.FindAsync(id);
+            var skills = await _genericRepos.GetById<Skills>(id);
             if (skills == null)
             {
                 return NotFound();
             }
 
-            _context.Skills.Remove(skills);
-            await _context.SaveChangesAsync();
+            await _genericRepos.DeleteInfo(skills);
 
             return NoContent();
-        }
-
-        private bool SkillsExists(int id)
-        {
-            return (_context.Skills?.Any(e => e.skillId == id)).GetValueOrDefault();
         }
     }
 }

@@ -19,6 +19,8 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class InformationController : ControllerBase
     {
+        private const string ApiKeyUserID = "UserID";
+        private const string ApiKeyUserPassword = "Password";
         private readonly IMapper _mapper;
         private readonly IGenericRepos _genericRepos; 
 
@@ -28,6 +30,34 @@ namespace MVC_Webapp.APIControllers
             _genericRepos = genericRepos;
         }
 
+        [HttpGet]
+        [Route("/api/login")]
+        public async Task<ActionResult<Information>> GetLogin()
+        {
+            if ((!HttpContext.Request.Headers.TryGetValue(ApiKeyUserID, out var Username)) ||
+                (!HttpContext.Request.Headers.TryGetValue(ApiKeyUserPassword, out var Password)))
+            {
+                return BadRequest("Both User Id and Password are required");
+            }
+            else
+            {
+                var UserId = await _genericRepos.GetByName<Information>(user => user.name == Username.ToString());
+
+                if (UserId == null)
+                {
+                    return NotFound("Invalid Username or Password");
+                }
+                if (UserId.password == Password.ToString())
+                {
+                    var record = _mapper.Map<InformationReadDTOs>(UserId);
+                    return Ok(record);
+                }
+                else
+                {
+                    return NotFound("Incorrect Password");
+                }
+            }
+        }
         // GET: api/Information
         [HttpGet]
         public async Task<ActionResult<List<InformationReadDTOs>>> GetInformation()
@@ -103,10 +133,5 @@ namespace MVC_Webapp.APIControllers
             await _genericRepos.DeleteInfo(information);
             return NoContent();
         }
-
-        //private bool InformationExists(int id)
-        //{
-        //    return (_context.Information?.Any(e => e.userId == id)).GetValueOrDefault();
-        //}
     }
 }

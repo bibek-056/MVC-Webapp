@@ -19,14 +19,12 @@ namespace MVC_Webapp.APIControllers
     [ApiController]
     public class EducationsController : ControllerBase
     {
-        private readonly MVC_WebappContext _context;
         private readonly IMapper _mapper;
         private readonly IGenericRepos _genericRepos;
 
-        public EducationsController( MVC_WebappContext context, IMapper mapper, IGenericRepos genericRepos)
+        public EducationsController( IMapper mapper, IGenericRepos genericRepos)
         {
             _mapper = mapper;
-            _context = context;
             _genericRepos = genericRepos;
         }
 
@@ -43,11 +41,7 @@ namespace MVC_Webapp.APIControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<List<EducationReadDTOs>>> GetEducations(int id)
         {
-          if (_context.Educations == null)
-          {
-              return NotFound();
-          }
-            var educations = await _context.Educations.Where(edu => edu.userId == id).ToListAsync();
+            var educations = await _genericRepos.GetUserData<Educations>(userData => userData.userId == id);
 
             if (educations == null)
             {
@@ -63,7 +57,7 @@ namespace MVC_Webapp.APIControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEducations(int id, EducationUpdateDTOs educationUpdateDTOs)
         {
-            var edu = await _context.Educations.FindAsync(id);
+            var edu = await _genericRepos.GetById<Educations>(id);
 
             if (id != educationUpdateDTOs.education_id)
             {
@@ -75,8 +69,7 @@ namespace MVC_Webapp.APIControllers
             }
 
             _mapper.Map(educationUpdateDTOs, edu);
-            _context.Educations.Update(edu);
-            await _context.SaveChangesAsync();
+            await _genericRepos.UpdateInfo(edu);
 
             var eduReadDTO = _mapper.Map<EducationReadDTOs>(edu);
             return Ok(eduReadDTO);
@@ -87,13 +80,8 @@ namespace MVC_Webapp.APIControllers
         [HttpPost]
         public async Task<ActionResult<EducationReadDTOs>> PostEducations(EducationCreateDTOs educationCreateDTOs)
         {
-          if (_context.Educations == null)
-          {
-              return Problem("Entity set 'MVC_WebappContext.Educations'  is null.");
-            }
           var education = _mapper.Map<Educations>(educationCreateDTOs);
-            _context.Educations.Add(education);
-            await _context.SaveChangesAsync();
+            await _genericRepos.AddInfo(education);
 
             var newEducation = _mapper.Map<EducationReadDTOs>(education);
 
@@ -104,25 +92,15 @@ namespace MVC_Webapp.APIControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEducations(int id)
         {
-            if (_context.Educations == null)
-            {
-                return NotFound();
-            }
-            var educations = await _context.Educations.FindAsync(id);
+            var educations = await _genericRepos.GetById<Educations>(id);
             if (educations == null)
             {
                 return NotFound();
             }
 
-            _context.Educations.Remove(educations);
-            await _context.SaveChangesAsync();
+            await _genericRepos.DeleteInfo(educations);
 
             return NoContent();
-        }
-
-        private bool EducationsExists(int id)
-        {
-            return (_context.Educations?.Any(e => e.education_id == id)).GetValueOrDefault();
         }
     }
 }
